@@ -1,13 +1,31 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient } from '../generated/prisma/client';
-
+import { PrismaClient } from '@prisma/client';
 @Injectable()
-export class PrismaService extends PrismaClient {
-  constructor(configService: ConfigService) {
-    const connectionString = configService.getOrThrow<string>('DATABASE_URL');
-    const adapter = new PrismaPg({ connectionString });
+export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  constructor(config: ConfigService) {
+    const connectionString =
+      config.get<string>('APP_DATABASE_URL') ??
+      process.env.APP_DATABASE_URL ??
+      process.env.DATABASE_URL ??
+      '';
+
+    const adapter = new PrismaPg({
+      connectionString,
+      // Evita falhas intermitentes: conexões idle fecham em 10s por padrão no Prisma v7
+      idleTimeoutMillis: 300_000, // 5 min
+      connectionTimeoutMillis: 10_000, // 10s para estabelecer conexão
+      max: 10,
+    });
     super({ adapter });
+  }
+
+  async onModuleInit() {
+    await this.$connect();
+  }
+
+  async onModuleDestroy() {
+    await this.$disconnect();
   }
 }
