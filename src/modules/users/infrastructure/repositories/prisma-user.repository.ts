@@ -9,11 +9,26 @@ import { UpdateUserDto } from '../../application/dtos/update-user.dto';
 export class PrismaUserRepository implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(data: CreateUserDto): Promise<User> {
+  private mapToDomain(user: any): User {
+    return new User(
+      user.id,
+      user.email,
+      user.name,
+      user.password,
+      user.resetPasswordToken,
+      user.resetPasswordExpires,
+    );
+  }
+
+  async create(data: Partial<User>): Promise<User> {
     const user = await this.prisma.user.create({
-      data,
+      data: {
+        email: data.email!,
+        password: data.password!,
+        name: data.name,
+      },
     });
-    return new User(user.id, user.email, user.name);
+    return this.mapToDomain(user);
   }
 
   async findById(id: number): Promise<User | null> {
@@ -21,20 +36,36 @@ export class PrismaUserRepository implements IUserRepository {
       where: { id },
     });
     if (!user) return null;
-    return new User(user.id, user.email, user.name);
+    return this.mapToDomain(user);
+  }
+
+  async findByEmail(email: string): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+    if (!user) return null;
+    return this.mapToDomain(user);
+  }
+
+  async findByResetToken(token: string): Promise<User | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { resetPasswordToken: token },
+    });
+    if (!user) return null;
+    return this.mapToDomain(user);
   }
 
   async findAll(): Promise<User[]> {
     const users = await this.prisma.user.findMany();
-    return users.map(user => new User(user.id, user.email, user.name));
+    return users.map((u) => this.mapToDomain(u));
   }
 
-  async update(id: number, data: UpdateUserDto): Promise<User> {
+  async update(id: number, data: Partial<User>): Promise<User> {
     const user = await this.prisma.user.update({
       where: { id },
       data,
     });
-    return new User(user.id, user.email, user.name);
+    return this.mapToDomain(user);
   }
 
   async delete(id: number): Promise<void> {
