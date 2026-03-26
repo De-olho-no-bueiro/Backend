@@ -5,13 +5,17 @@ import { HealthModule } from './health/health.module';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from './prisma/prisma.module';
 
+import { UserModule } from './modules/users/user.module';
+
 @Module({
-  imports: [HealthModule,
+  imports: [
+    HealthModule,
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
     }),
-    PrismaModule
+    PrismaModule,
+    UserModule,
   ],
   controllers: [AppController],
   providers: [AppService],
