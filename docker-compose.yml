@@ -9,8 +9,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - "5432:5432"
+    # PostgreSQL 18+: volume na raiz do PG (não em .../data)
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
