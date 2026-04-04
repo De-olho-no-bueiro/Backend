@@ -3,7 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { UserModule } from '../users/user.module';
 
-import { AuthController } from './infrastructure/http/auth.controller';
+
 import { JwtStrategy } from './infrastructure/strategies/jwt.strategy';
 
 import { LoginUseCase } from './application/use-cases/login.use-case';
@@ -20,7 +20,7 @@ import { ResetPasswordUseCase } from './application/use-cases/reset-password.use
       signOptions: { expiresIn: '1d' },
     }),
   ],
-  controllers: [AuthController],
+  controllers: [],
   providers: [
     JwtStrategy,
     LoginUseCase,
@@ -28,6 +28,13 @@ import { ResetPasswordUseCase } from './application/use-cases/reset-password.use
     ForgotPasswordUseCase,
     ResetPasswordUseCase,
   ],
-  exports: [JwtStrategy, JwtModule],
+  exports: [
+    JwtStrategy, 
+    JwtModule,
+    LoginUseCase,
+    SignupUseCase,
+    ForgotPasswordUseCase,
+    ResetPasswordUseCase,
+  ],
 })
 export class AuthModule {}

@@ -7,7 +7,10 @@ import { PrismaModule } from './prisma/prisma.module';
 
 import { UserModule } from './modules/users/user.module';
 
-import { AuthModule } from './modules/auth/auth.module';
+import { MobileAuthModule } from './modules/auth/mobile.auth.module';
+import { WebAuthModule } from './modules/auth/web.auth.module';
+import { MobileReportesModule } from './modules/reportes/mobile.reportes.module';
+import { WebReportesModule } from './modules/reportes/web.reportes.module';
 
 @Module({
   imports: [
@@ -18,7 +21,10 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     PrismaModule,
     UserModule,
-    AuthModule,
+    MobileAuthModule,
+    WebAuthModule,
+    MobileReportesModule,
+    WebReportesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

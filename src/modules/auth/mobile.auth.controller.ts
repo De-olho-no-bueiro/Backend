@@ -1,19 +1,19 @@
 import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
-import { LoginUseCase } from '../../application/use-cases/login.use-case';
-import { SignupUseCase } from '../../application/use-cases/signup.use-case';
-import { ForgotPasswordUseCase } from '../../application/use-cases/forgot-password.use-case';
-import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
+import { LoginUseCase } from './application/use-cases/login.use-case';
+import { SignupUseCase } from './application/use-cases/signup.use-case';
+import { ForgotPasswordUseCase } from './application/use-cases/forgot-password.use-case';
+import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
 
-import { LoginDto } from '../../application/dtos/login.dto';
-import { SignupDto } from '../../application/dtos/signup.dto';
-import { ForgotPasswordDto } from '../../application/dtos/forgot-password.dto';
-import { ResetPasswordDto } from '../../application/dtos/reset-password.dto';
+import { LoginDto } from './application/dtos/login.dto';
+import { SignupDto } from './application/dtos/signup.dto';
+import { ForgotPasswordDto } from './application/dtos/forgot-password.dto';
+import { ResetPasswordDto } from './application/dtos/reset-password.dto';
 
-@ApiTags('auth')
-@Controller('auth')
-export class AuthController {
+@ApiTags('mobile-auth')
+@Controller('mobile/v1/auth')
+export class MobileAuthController {
   constructor(
     private readonly loginUseCase: LoginUseCase,
     private readonly signupUseCase: SignupUseCase,
@@ -22,7 +22,7 @@ export class AuthController {
   ) {}
 
   @Post('signup')
-  @ApiOperation({ summary: 'Cadastrar um novo usuário' })
+  @ApiOperation({ summary: 'Cadastrar um novo usuário (Mobile)' })
   @ApiResponse({ status: 201, description: 'Usuário cadastrado com sucesso.' })
   async signup(@Body() signupDto: SignupDto) {
     return this.signupUseCase.execute(signupDto);
@@ -30,7 +30,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Fazer login na plataforma' })
+  @ApiOperation({ summary: 'Fazer login pelo Aplicativo Móvel' })
   @ApiResponse({ status: 200, description: 'Retorna o token de acesso (JWT).' })
   async login(@Body() loginDto: LoginDto) {
     return this.loginUseCase.execute(loginDto);
@@ -38,7 +38,7 @@ export class AuthController {
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Solicitar link para reset de senha (envio de email)' })
+  @ApiOperation({ summary: 'Solicitar link para reset de senha' })
   @ApiResponse({ status: 200, description: 'Token de recuperação gerado.' })
   async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
     return this.forgotPasswordUseCase.execute(forgotPasswordDto);
