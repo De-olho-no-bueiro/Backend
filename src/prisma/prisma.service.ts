@@ -1,9 +1,10 @@
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(PrismaService.name);
   constructor(config: ConfigService) {
     const connectionString =
       config.get<string>('APP_DATABASE_URL') ??
@@ -22,7 +23,13 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
   }
 
   async onModuleInit() {
-    await this.$connect();
+    try {
+      await this.$connect();
+      this.logger.log('Supabase (PostgreSQL) conectado com sucesso');
+    } catch (error) {
+      this.logger.error('Falha ao conectar ao Supabase', error);
+      throw error;
+    }
   }
 
   async onModuleDestroy() {
