@@ -10,8 +10,9 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
   .setTitle("Api De Olho No Bueiro")
-  .setDescription("Esta é a api referente ao o projeto da cadeira de Extensão do Último semestre de Análise e Desenvolvimento de Sistemas da Unifor")
+  .setDescription("Esta API atende tanto o aplicativo móvel quanto o sistema de gestão online.")
   .setVersion("1.0.0")
+  .addBearerAuth()
   .build();
 
   const document = SwaggerModule.createDocument(app, config);

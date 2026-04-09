@@ -11,6 +11,7 @@ import { MobileAuthModule } from './modules/auth/mobile.auth.module';
 import { WebAuthModule } from './modules/auth/web.auth.module';
 import { MobileReportesModule } from './modules/reportes/mobile.reportes.module';
 import { WebReportesModule } from './modules/reportes/web.reportes.module';
+import { CommentsModule } from './modules/comments/comments.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { WebReportesModule } from './modules/reportes/web.reportes.module';
     WebAuthModule,
     MobileReportesModule,
     WebReportesModule,
+    CommentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
