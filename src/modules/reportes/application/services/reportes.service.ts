@@ -80,6 +80,7 @@ export class ReportesService {
     const area = await this.prisma.area.create({
       data: {
         name: data.descricao || 'Área de Alagamento',
+        nivel: data.nivel,
         latitude: data.coordinates.map((c: any) => c.latitude),
         longitude: data.coordinates.map((c: any) => c.longitude),
       },

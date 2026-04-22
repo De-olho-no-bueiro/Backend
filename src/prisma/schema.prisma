@@ -75,6 +75,7 @@ model Post {
 model Area {
   id        Int      @id @default(autoincrement())
   name      String
+  nivel     String?
   // Vértices do polígono; validar mesmo tamanho dos dois arrays na aplicação
   latitude  Float[]
   longitude Float[]
