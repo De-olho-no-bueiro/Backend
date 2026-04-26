@@ -9,6 +9,14 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  // TODO: Configuração de CORS aberta para todas as origens (*).
+  // Em produção, restrinja para o domínio real por segurança.
+  app.enableCors({
+    origin: '*',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+  });
+
   // Aumentar o limite de payload para suportar as imagens base64 do mobile
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
