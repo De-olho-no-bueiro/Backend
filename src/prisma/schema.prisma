@@ -76,14 +76,12 @@ model Area {
   id        Int      @id @default(autoincrement())
   name      String
   nivel     String?
-  // Vértices do polígono; validar mesmo tamanho dos dois arrays na aplicação
   latitude  Float[]
   longitude Float[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   posts     Post[]
 
-  // Nome único global costuma ser frágil (ex.: duas "Praça Central"); use índice para busca
   @@index([name])
 }
 

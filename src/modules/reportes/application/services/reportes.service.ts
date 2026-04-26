@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
 
 @Injectable()
 export class ReportesService {
+  private readonly logger = new Logger(ReportesService.name);
+
   constructor(private readonly prisma: PrismaService) {}
 
   private parseMedias(midias?: string[]): any[] {
@@ -16,6 +18,7 @@ export class ReportesService {
 
   // Generics (Posts with location)
   async createReporte(data: any, authorId: number) {
+    this.logger.log(`Creating reporte for author ${authorId}: ${JSON.stringify(data)}`);
     return this.prisma.post.create({
       data: {
         title: data.tipo,
@@ -77,21 +80,32 @@ export class ReportesService {
 
   // Flood Areas
   async createFloodArea(data: any, authorId: number) {
+    this.logger.log(`Creating flood area for author ${authorId}: ${JSON.stringify(data)}`);
+
+    if (!data.coordinates || !Array.isArray(data.coordinates) || data.coordinates.length < 3) {
+      this.logger.error(`Invalid coordinates for flood area: ${JSON.stringify(data.coordinates)}`);
+      throw new Error('Área de alagamento requer pelo menos 3 coordenadas');
+    }
+
     const area = await this.prisma.area.create({
       data: {
         name: data.descricao || 'Área de Alagamento',
-        nivel: data.nivel,
+        nivel: data.nivel || 'medio',
         latitude: data.coordinates.map((c: any) => c.latitude),
         longitude: data.coordinates.map((c: any) => c.longitude),
       },
     });
+
+    this.logger.log(`Created area with id ${area.id}`);
 
     await this.prisma.post.create({
       data: {
         title: 'Área de Alagamento',
         content: data.descricao,
         type: 'area',
-        nivel: data.nivel,
+        nivel: data.nivel || 'medio',
+        latitude: data.coordinates[0]?.latitude,
+        longitude: data.coordinates[0]?.longitude,
         areaId: area.id,
         published: true,
         authorId,
