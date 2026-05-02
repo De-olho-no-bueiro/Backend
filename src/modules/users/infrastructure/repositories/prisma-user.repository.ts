@@ -17,6 +17,7 @@ export class PrismaUserRepository implements IUserRepository {
       user.password,
       user.resetPasswordToken,
       user.resetPasswordExpires,
+      user.refreshToken,
     );
   }
 
@@ -50,6 +51,14 @@ export class PrismaUserRepository implements IUserRepository {
   async findByResetToken(token: string): Promise<User | null> {
     const user = await this.prisma.user.findFirst({
       where: { resetPasswordToken: token },
+    });
+    if (!user) return null;
+    return this.mapToDomain(user);
+  }
+
+  async findByRefreshToken(refreshToken: string): Promise<User | null> {
+    const user = await this.prisma.user.findFirst({
+      where: { refreshToken },
     });
     if (!user) return null;
     return this.mapToDomain(user);

@@ -4,6 +4,7 @@ import type { IUserRepository } from '../../../users/domain/repositories/user.re
 import { Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { LoginDto } from '../dtos/login.dto';
 
 @Injectable()
@@ -36,8 +37,17 @@ export class LoginUseCase {
 
     this.logger.log(`User ${data.email} logged in successfully`);
     const payload = { sub: user.id, email: user.email };
+    const refreshToken = randomUUID();
+
+    await this.userRepository.update(user.id, { refreshToken });
+
+    this.logger.debug(
+      `Issuing tokens for user ${user.email}: accessToken=yes refreshToken=${refreshToken.slice(0, 8)}...`,
+    );
+
     return {
       access_token: this.jwtService.sign(payload),
+      refresh_token: refreshToken,
       userId: user.id,
       name: user.name,
     };

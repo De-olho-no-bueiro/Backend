@@ -18,11 +18,13 @@ model User {
   profilePicture       Bytes?
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
+  refreshToken         String?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
   
   posts                Post[]
   comments             Comment[]
+  likes                Like[]
 }
 
 model Comment {
@@ -53,6 +55,8 @@ model Post {
   latitude  Float?
   longitude Float?
   endereco  String?
+  isActive  Boolean  @default(true)
+  negativeReportsCount Int @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -66,10 +70,27 @@ model Post {
   areaId    Int?
 
   comments Comment[]
+  likes    Like[]
 
   @@index([authorId])
   @@index([manholeId])
   @@index([areaId])
+  @@index([isActive])
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId Int
+
+  @@unique([userId, postId])
+  @@index([userId])
+  @@index([postId])
 }
 
 model Area {
