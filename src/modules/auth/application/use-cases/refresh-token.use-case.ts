@@ -33,6 +33,7 @@ export class RefreshTokenUseCase {
       refresh_token: nextRefreshToken,
       userId: user.id,
       name: user.name,
+      profilePicture: user.profilePicture ?? null,
     };
   }
 }

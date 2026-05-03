@@ -7,6 +7,26 @@ export class ReportesService {
 
   constructor(private readonly prisma: PrismaService) {}
 
+  private get postModel() {
+    return this.prisma.post as any;
+  }
+
+  private get likeModel() {
+    return this.prisma.like as any;
+  }
+
+  private get manholeModel() {
+    return this.prisma.manhole as any;
+  }
+
+  private get areaModel() {
+    return this.prisma.area as any;
+  }
+
+  private get postMediaModel() {
+    return (this.prisma as any).postMedia;
+  }
+
   private parseMedias(midias?: string[]): any[] {
     if (!midias || !Array.isArray(midias)) return [];
     return midias.slice(0, 6).map((base64String) => {
@@ -14,6 +34,90 @@ export class ReportesService {
        const cleanBase64 = base64String.replace(/^data:([A-Za-z-+/]+);base64,/, '');
        return Buffer.from(cleanBase64, 'base64') as any;
     });
+  }
+
+  private parseLegacyBufferToDataUrl(mediaObj: any): string {
+    if (typeof mediaObj === 'string') {
+      return mediaObj.startsWith('data:') ? mediaObj : `data:image/jpeg;base64,${mediaObj}`;
+    }
+
+    if (Buffer.isBuffer(mediaObj)) {
+      return `data:image/jpeg;base64,${mediaObj.toString('base64')}`;
+    }
+
+    if (mediaObj && mediaObj.type === 'Buffer' && Array.isArray(mediaObj.data)) {
+      return `data:image/jpeg;base64,${Buffer.from(mediaObj.data).toString('base64')}`;
+    }
+
+    return '';
+  }
+
+  private normalizeMediaRecords(post: any) {
+    const structuredMedia = Array.isArray(post.media)
+      ? post.media.map((item: any) => ({
+          id: item.id,
+          storageKey: item.storageKey,
+          url: item.url,
+          mimeType: item.mimeType,
+          sizeBytes: item.sizeBytes,
+          width: item.width ?? null,
+          height: item.height ?? null,
+          position: item.position ?? 0,
+        }))
+      : [];
+
+    if (structuredMedia.length > 0) {
+      return {
+        media: structuredMedia,
+        medias: structuredMedia.map((item: any) => item.url),
+        fotoUrl: structuredMedia[0]?.url ?? null,
+      };
+    }
+
+    const legacyMedia = Array.isArray(post.medias)
+      ? post.medias.map((item: any) => this.parseLegacyBufferToDataUrl(item)).filter(Boolean)
+      : [];
+
+    return {
+      media: legacyMedia.map((url: string, index: number) => ({
+        id: `legacy-${post.id}-${index}`,
+        storageKey: null,
+        url,
+        mimeType: 'image/jpeg',
+        sizeBytes: 0,
+        width: null,
+        height: null,
+        position: index,
+      })),
+      medias: legacyMedia,
+      fotoUrl: legacyMedia[0] ?? null,
+    };
+  }
+
+  private extractStructuredMedia(authorId: number, data: any) {
+    if (!Array.isArray(data?.mediaUploads)) return [];
+
+    const allowedPrefix = `mobile/posts/${authorId}/`;
+
+    return data.mediaUploads
+      .slice(0, 6)
+      .filter(
+        (item: any) =>
+          item?.storageKey &&
+          item?.url &&
+          item?.mimeType &&
+          item?.sizeBytes &&
+          String(item.storageKey).startsWith(allowedPrefix),
+      )
+      .map((item: any, index: number) => ({
+        storageKey: String(item.storageKey),
+        url: String(item.url),
+        mimeType: String(item.mimeType),
+        sizeBytes: Number(item.sizeBytes),
+        width: item.width != null ? Number(item.width) : null,
+        height: item.height != null ? Number(item.height) : null,
+        position: index,
+      }));
   }
 
   private getPostInclude(viewerId?: number) {
@@ -25,40 +129,73 @@ export class ReportesService {
       _count: { select: { likes: true } },
       area: true,
       manhole: true,
+      media: { orderBy: { position: 'asc' } },
     };
   }
 
   private serializePost(post: any) {
     const likes = Array.isArray(post.likes) ? post.likes : [];
     const likeCount = post._count?.likes ?? 0;
+    const mediaData = this.normalizeMediaRecords(post);
 
     return {
       ...post,
       likeCount,
       likedByMe: likes.length > 0,
+      media: mediaData.media,
+      medias: mediaData.medias,
+      fotoUrl: mediaData.fotoUrl,
       likes: undefined,
       _count: undefined,
     };
   }
 
   private isLegacySchemaError(error: any) {
-    return error?.code === 'P2021' || error?.code === 'P2022';
+    const message = typeof error?.message === 'string' ? error.message : '';
+
+    return (
+      error?.code === 'P2021' ||
+      error?.code === 'P2022' ||
+      (error?.name === 'PrismaClientValidationError' &&
+        (message.includes('Unknown field `media`') ||
+          message.includes('Unknown field `isActive`') ||
+          message.includes('Unknown argument `media`')))
+    );
   }
 
   private serializeLegacyPost(post: any) {
+    const mediaData = this.normalizeMediaRecords(post);
+
     return {
       ...post,
       likeCount: 0,
       likedByMe: false,
       isActive: true,
       negativeReportsCount: 0,
+      media: mediaData.media,
+      medias: mediaData.medias,
+      fotoUrl: mediaData.fotoUrl,
     };
+  }
+
+  private async attachStructuredMedia(postId: number, authorId: number, data: any) {
+    const structuredMedia = this.extractStructuredMedia(authorId, data);
+    if (structuredMedia.length === 0 || !this.postMediaModel) {
+      return;
+    }
+
+    await this.postMediaModel.createMany({
+      data: structuredMedia.map((item: any) => ({
+        ...item,
+        postId,
+      })),
+    });
   }
 
   // Generics (Posts with location)
   async createReporte(data: any, authorId: number) {
     this.logger.log(`Creating reporte for author ${authorId}: ${JSON.stringify(data)}`);
-    return this.prisma.post.create({
+    const post = await this.postModel.create({
       data: {
         title: data.tipo,
         content: data.descricao,
@@ -72,11 +209,14 @@ export class ReportesService {
         authorId,
       },
     });
+
+    await this.attachStructuredMedia(post.id, authorId, data);
+    return post;
   }
 
   async getReportes(viewerId?: number) {
     try {
-      const reportes = await this.prisma.post.findMany({
+      const reportes = await this.postModel.findMany({
         where: { type: 'alagamento', isActive: true }, // O mobile chama de reporte o alagamento genérico por enquanto 
         orderBy: { createdAt: 'desc' },
         include: this.getPostInclude(viewerId),
@@ -86,7 +226,7 @@ export class ReportesService {
     } catch (error) {
       if (!this.isLegacySchemaError(error)) throw error;
       this.logger.warn('Legacy schema detected in getReportes. Falling back without likes/isActive.');
-      const reportes = await this.prisma.post.findMany({
+      const reportes = await this.postModel.findMany({
         where: { type: 'alagamento' },
         orderBy: { createdAt: 'desc' },
         include: { author: { select: { id: true, name: true, profilePicture: true } } },
@@ -97,7 +237,7 @@ export class ReportesService {
 
   // Bueiros
   async createManhole(data: any, authorId: number) {
-    const manhole = await this.prisma.manhole.create({
+    const manhole = await this.manholeModel.create({
       data: {
         name: data.descricao || 'Bueiro Desconhecido',
         latitude: data.latitude,
@@ -106,7 +246,7 @@ export class ReportesService {
     });
 
     // We also link it to a Post to hold the descriptive content & media
-    await this.prisma.post.create({
+    const post = await this.postModel.create({
       data: {
         title: 'Reporte de Bueiro',
         content: data.descricao,
@@ -121,12 +261,14 @@ export class ReportesService {
       },
     });
 
+    await this.attachStructuredMedia(post.id, authorId, data);
+
     return manhole;
   }
 
   async getManholes(viewerId?: number) {
     try {
-      const manholes = await this.prisma.manhole.findMany({
+      const manholes = await this.manholeModel.findMany({
         where: { posts: { some: { isActive: true } } },
         orderBy: { createdAt: 'desc' },
         include: {
@@ -146,7 +288,7 @@ export class ReportesService {
     } catch (error) {
       if (!this.isLegacySchemaError(error)) throw error;
       this.logger.warn('Legacy schema detected in getManholes. Falling back without likes/isActive.');
-      const manholes = await this.prisma.manhole.findMany({
+      const manholes = await this.manholeModel.findMany({
         orderBy: { createdAt: 'desc' },
         include: {
           posts: {
@@ -172,7 +314,7 @@ export class ReportesService {
       throw new Error('Área de alagamento requer pelo menos 3 coordenadas');
     }
 
-    const area = await this.prisma.area.create({
+    const area = await this.areaModel.create({
       data: {
         name: data.descricao || 'Área de Alagamento',
         nivel: data.nivel || 'medio',
@@ -183,7 +325,7 @@ export class ReportesService {
 
     this.logger.log(`Created area with id ${area.id}`);
 
-    await this.prisma.post.create({
+    const post = await this.postModel.create({
       data: {
         title: 'Área de Alagamento',
         content: data.descricao,
@@ -199,12 +341,14 @@ export class ReportesService {
       },
     });
 
+    await this.attachStructuredMedia(post.id, authorId, data);
+
     return area;
   }
 
   async getFloodAreas(viewerId?: number) {
     try {
-      const areas = await this.prisma.area.findMany({
+      const areas = await this.areaModel.findMany({
         where: { posts: { some: { isActive: true } } },
         orderBy: { createdAt: 'desc' },
         include: {
@@ -224,7 +368,7 @@ export class ReportesService {
     } catch (error) {
       if (!this.isLegacySchemaError(error)) throw error;
       this.logger.warn('Legacy schema detected in getFloodAreas. Falling back without likes/isActive.');
-      const areas = await this.prisma.area.findMany({
+      const areas = await this.areaModel.findMany({
         orderBy: { createdAt: 'desc' },
         include: {
           posts: {
@@ -242,45 +386,70 @@ export class ReportesService {
   }
 
   async getPostById(postId: number, viewerId?: number) {
-    const post = await this.prisma.post.findUnique({
-      where: { id: postId },
-      include: this.getPostInclude(viewerId),
-    });
+    try {
+      const post = await this.postModel.findUnique({
+        where: { id: postId },
+        include: this.getPostInclude(viewerId),
+      });
 
-    if (!post) {
-      throw new NotFoundException('Post não encontrado.');
+      if (!post) {
+        throw new NotFoundException('Post não encontrado.');
+      }
+
+      return this.serializePost(post);
+    } catch (error) {
+      if (!this.isLegacySchemaError(error)) throw error;
+      const post = await this.postModel.findUnique({
+        where: { id: postId },
+        include: { author: { select: { id: true, name: true, profilePicture: true } } },
+      });
+
+      if (!post) {
+        throw new NotFoundException('Post não encontrado.');
+      }
+
+      return this.serializeLegacyPost(post);
     }
-
-    return this.serializePost(post);
   }
 
   async getMyHistory(authorId: number) {
-    const posts = await this.prisma.post.findMany({
-      where: { authorId },
-      orderBy: { createdAt: 'desc' },
-      include: this.getPostInclude(authorId),
-    });
+    try {
+      const posts = await this.postModel.findMany({
+        where: { authorId },
+        orderBy: { createdAt: 'desc' },
+        include: this.getPostInclude(authorId),
+      });
 
-    return posts.map((post) => this.serializePost(post));
+      return posts.map((post: any) => this.serializePost(post));
+    } catch (error) {
+      if (!this.isLegacySchemaError(error)) throw error;
+      const posts = await this.postModel.findMany({
+        where: { authorId },
+        orderBy: { createdAt: 'desc' },
+        include: { author: { select: { id: true, name: true, profilePicture: true } } },
+      });
+
+      return posts.map((post: any) => this.serializeLegacyPost(post));
+    }
   }
 
   async toggleLike(postId: number, userId: number) {
-    const post = await this.prisma.post.findUnique({ where: { id: postId } });
+    const post = await this.postModel.findUnique({ where: { id: postId } });
     if (!post) {
       throw new NotFoundException('Post não encontrado.');
     }
 
-    const existing = await this.prisma.like.findUnique({
+    const existing = await this.likeModel.findUnique({
       where: { userId_postId: { userId, postId } },
     });
 
     if (existing) {
-      await this.prisma.like.delete({ where: { id: existing.id } });
+      await this.likeModel.delete({ where: { id: existing.id } });
     } else {
-      await this.prisma.like.create({ data: { userId, postId } });
+      await this.likeModel.create({ data: { userId, postId } });
     }
 
-    const likeCount = await this.prisma.like.count({ where: { postId } });
+    const likeCount = await this.likeModel.count({ where: { postId } });
     return {
       likedByMe: !existing,
       likeCount,
@@ -288,7 +457,7 @@ export class ReportesService {
   }
 
   async verifyPost(postId: number, isStillHappening: boolean) {
-    const post = await this.prisma.post.findUnique({ where: { id: postId } });
+    const post = await this.postModel.findUnique({ where: { id: postId } });
     if (!post) {
       throw new NotFoundException('Post não encontrado.');
     }
@@ -299,7 +468,7 @@ export class ReportesService {
 
     const nextNegativeReportsCount = post.negativeReportsCount + 1;
 
-    return this.prisma.post.update({
+    return this.postModel.update({
       where: { id: postId },
       data: {
         negativeReportsCount: nextNegativeReportsCount,
@@ -312,7 +481,7 @@ export class ReportesService {
     const cutoff = new Date();
     cutoff.setDate(cutoff.getDate() - 3);
 
-    return this.prisma.post.updateMany({
+    return this.postModel.updateMany({
       where: {
         isActive: true,
         createdAt: { lt: cutoff },

@@ -2,12 +2,52 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../../prisma/prisma.service';
 import { IUserRepository } from '../../domain/repositories/user.repository.interface';
 import { User } from '../../domain/entities/user.entity';
-import { CreateUserDto } from '../../application/dtos/create-user.dto';
-import { UpdateUserDto } from '../../application/dtos/update-user.dto';
 
 @Injectable()
 export class PrismaUserRepository implements IUserRepository {
   constructor(private readonly prisma: PrismaService) {}
+
+  private toPrismaBytes(value?: Buffer | null) {
+    if (value === undefined) return undefined;
+    if (value === null) return null;
+    return new Uint8Array(value);
+  }
+
+  private toPrismaUserData(data: Partial<User>) {
+    return {
+      ...(data.email !== undefined ? { email: data.email } : {}),
+      ...(data.password !== undefined ? { password: data.password } : {}),
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.resetPasswordToken !== undefined
+        ? { resetPasswordToken: data.resetPasswordToken }
+        : {}),
+      ...(data.resetPasswordExpires !== undefined
+        ? { resetPasswordExpires: data.resetPasswordExpires }
+        : {}),
+      ...(data.refreshToken !== undefined ? { refreshToken: data.refreshToken } : {}),
+      ...(data.profilePicture !== undefined
+        ? { profilePicture: this.toPrismaBytes(data.profilePicture) }
+        : {}),
+    };
+  }
+
+  private toPrismaCreateUserData(data: Partial<User>) {
+    return {
+      email: data.email!,
+      password: data.password!,
+      ...(data.name !== undefined ? { name: data.name } : {}),
+      ...(data.resetPasswordToken !== undefined
+        ? { resetPasswordToken: data.resetPasswordToken }
+        : {}),
+      ...(data.resetPasswordExpires !== undefined
+        ? { resetPasswordExpires: data.resetPasswordExpires }
+        : {}),
+      ...(data.refreshToken !== undefined ? { refreshToken: data.refreshToken } : {}),
+      ...(data.profilePicture !== undefined
+        ? { profilePicture: this.toPrismaBytes(data.profilePicture) }
+        : {}),
+    };
+  }
 
   private mapToDomain(user: any): User {
     return new User(
@@ -18,16 +58,13 @@ export class PrismaUserRepository implements IUserRepository {
       user.resetPasswordToken,
       user.resetPasswordExpires,
       user.refreshToken,
+      user.profilePicture,
     );
   }
 
   async create(data: Partial<User>): Promise<User> {
     const user = await this.prisma.user.create({
-      data: {
-        email: data.email!,
-        password: data.password!,
-        name: data.name,
-      },
+      data: this.toPrismaCreateUserData(data),
     });
     return this.mapToDomain(user);
   }
@@ -72,7 +109,7 @@ export class PrismaUserRepository implements IUserRepository {
   async update(id: number, data: Partial<User>): Promise<User> {
     const user = await this.prisma.user.update({
       where: { id },
-      data,
+      data: this.toPrismaUserData(data),
     });
     return this.mapToDomain(user);
   }

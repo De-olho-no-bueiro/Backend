@@ -3,6 +3,9 @@ import { ApiTags, ApiOperation, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { ReportesService } from './application/services/reportes.service';
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard';
 import { VerifyReporteDto } from './application/dtos/verify-reporte.dto';
+import { CreateReporteDto } from './application/dtos/create-reporte.dto';
+import { CreateManholeDto } from './application/dtos/create-manhole.dto';
+import { CreateFloodAreaDto } from './application/dtos/create-flood-area.dto';
 
 @ApiTags('mobile-reportes')
 @ApiBearerAuth()
@@ -48,21 +51,8 @@ export class MobileReportesController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Criar Reporte/Alagamento simples (Mobile)' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        tipo: { type: 'string', example: 'alagamento' },
-        nivel: { type: 'string', example: 'baixo' },
-        latitude: { type: 'number', example: -23.123 },
-        longitude: { type: 'number', example: -46.123 },
-        endereco: { type: 'string', example: 'Rua Exemplo' },
-        descricao: { type: 'string', example: 'Asfaltamento ruim' },
-        midias: { type: 'array', items: { type: 'string' }, example: ['base64string1', 'base64string2'] }
-      }
-    }
-  })
-  async createReporte(@Body() createDto: any, @Req() req: any) {
+  @ApiBody({ type: CreateReporteDto })
+  async createReporte(@Body() createDto: CreateReporteDto, @Req() req: any) {
     return this.reportesService.createReporte(createDto, req.user.userId);
   }
 }
@@ -83,18 +73,8 @@ export class MobileManholesController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Criar Bueiro (Mobile)' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        latitude: { type: 'number', example: -23.123 },
-        longitude: { type: 'number', example: -46.123 },
-        descricao: { type: 'string', example: 'Bueiro sem tampa no canteiro' },
-        midias: { type: 'array', items: { type: 'string' }, example: ['base64string'] }
-      }
-    }
-  })
-  async createManhole(@Body() createDto: any, @Req() req: any) {
+  @ApiBody({ type: CreateManholeDto })
+  async createManhole(@Body() createDto: CreateManholeDto, @Req() req: any) {
     return this.reportesService.createManhole(createDto, req.user.userId);
   }
 }
@@ -128,18 +108,8 @@ export class MobileFloodAreasController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiOperation({ summary: 'Criar Área de Alagamento (Mobile)' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        coordinates: { type: 'array', example: [{ latitude: -23.1, longitude: -46.1 }, { latitude: -23.2, longitude: -46.2 }] },
-        nivel: { type: 'string', example: 'medio' },
-        descricao: { type: 'string', example: 'Cruzamento alagado' },
-        midias: { type: 'array', items: { type: 'string' }, example: [] }
-      }
-    }
-  })
-  async createFloodArea(@Body() createDto: any, @Req() req: any) {
+  @ApiBody({ type: CreateFloodAreaDto })
+  async createFloodArea(@Body() createDto: CreateFloodAreaDto, @Req() req: any) {
     this.logger.debug(
       `Creating flood area request: userId=${req.user?.userId} coordinates=${Array.isArray(createDto?.coordinates) ? createDto.coordinates.length : 0} nivel=${createDto?.nivel ?? 'n/a'}`,
     );

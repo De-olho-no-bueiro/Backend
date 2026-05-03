@@ -51,6 +51,7 @@ Abaixo está o descritivo de todas as rotas e funções disponíveis no Backend 
 
 ### `POST /`
 - **Função:** Criar um novo Reporte.
+- **Observação:** Na versão nova, as imagens devem ser enviadas primeiro para `/mobile/v1/uploads/presign` e o post passa a receber `mediaUploads` com as URLs/keys resultantes. O campo `midias` em base64 segue apenas como compatibilidade legada.
 - **Corpo da Requisição (Exemplo simplificado via Body):**
   ```json
   {
@@ -61,10 +62,42 @@ Abaixo está o descritivo de todas as rotas e funções disponíveis no Backend 
     "endereco": "Rua Exemplo, 123",
     "nivel": "baixo",
     "descricao": "Bairro todo alagado.",
-    "fotoUri": "url_da_foto.jpg",
+    "mediaUploads": [
+      {
+        "storageKey": "mobile/posts/12/abc-image.jpg",
+        "url": "https://cdn.exemplo.com/mobile/posts/12/abc-image.jpg",
+        "mimeType": "image/jpeg",
+        "sizeBytes": 2457600,
+        "width": 1280,
+        "height": 720
+      }
+    ],
     "dataHora": "2026-04-09T14:00:00Z"
   }
   ```
+
+---
+
+## 📱 Mobile API (Uploads)
+**Caminho Base:** `/mobile/v1/uploads`
+
+### `POST /presign`
+- **Função:** Gerar URLs assinadas para upload direto das imagens do aplicativo para o bucket S3 compatível.
+- **Corpo da Requisição (JSON):**
+  ```json
+  {
+    "files": [
+      {
+        "fileName": "alagamento.jpg",
+        "mimeType": "image/jpeg",
+        "sizeBytes": 2457600,
+        "width": 1280,
+        "height": 720
+      }
+    ]
+  }
+  ```
+- **Retorno Esperado:** Lista `uploads` com `uploadUrl`, `publicUrl`, `storageKey`, `expiresAt` e `headers`.
 
 ---
 

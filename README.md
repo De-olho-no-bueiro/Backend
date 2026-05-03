@@ -31,6 +31,22 @@
 $ pnpm install
 ```
 
+## Environment for image uploads
+
+Configure the backend with an S3-compatible bucket before using the mobile image flow:
+
+```bash
+S3_ENDPOINT=
+S3_REGION=us-east-1
+S3_BUCKET=
+S3_ACCESS_KEY_ID=
+S3_SECRET_ACCESS_KEY=
+S3_PUBLIC_BASE_URL=
+UPLOAD_MAX_FILES=6
+UPLOAD_MAX_FILE_SIZE_BYTES=8388608
+UPLOAD_ALLOWED_MIME_TYPES=image/jpeg,image/png,image/webp
+```
+
 ## Compile and run the project
 
 ```bash

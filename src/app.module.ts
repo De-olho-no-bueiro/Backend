@@ -13,6 +13,7 @@ import { WebAuthModule } from './modules/auth/web.auth.module';
 import { MobileReportesModule } from './modules/reportes/mobile.reportes.module';
 import { WebReportesModule } from './modules/reportes/web.reportes.module';
 import { CommentsModule } from './modules/comments/comments.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { CommentsModule } from './modules/comments/comments.module';
     MobileReportesModule,
     WebReportesModule,
     CommentsModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

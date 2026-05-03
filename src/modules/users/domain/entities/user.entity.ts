@@ -7,6 +7,7 @@ export class User {
     public resetPasswordToken?: string | null,
     public resetPasswordExpires?: Date | null,
     public refreshToken?: string | null,
+    public profilePicture?: Buffer | null,
     // public posts?: Post[] // Removido ou a ser tratado futuramente
   ) {}
 }

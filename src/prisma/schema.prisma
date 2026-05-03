@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -12,65 +9,58 @@ datasource db {
 model User {
   id                   Int       @id @default(autoincrement())
   email                String    @unique
-  password             String
   name                 String?
   cpf                  String?   @unique
-  profilePicture       Bytes?
-  resetPasswordToken   String?
-  resetPasswordExpires DateTime?
-  refreshToken         String?
   createdAt            DateTime  @default(now())
+  password             String
+  profilePicture       Bytes?
+  resetPasswordExpires DateTime?
+  resetPasswordToken   String?
   updatedAt            DateTime  @updatedAt
-  
-  posts                Post[]
+  refreshToken         String?
   comments             Comment[]
   likes                Like[]
+  posts                Post[]
 }
 
 model Comment {
   id        Int      @id @default(autoincrement())
-  content   String   @db.Text
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId Int
-
-  author   User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  authorId Int?
+  postId    Int
+  authorId  Int?
+  author    User?    @relation(fields: [authorId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@index([authorId])
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?  @db.Text
-  // Imagens como BYTEA no PostgreSQL (Buffer no Node)
-  medias    Bytes[]  @default([])
-  published Boolean  @default(false)
-  type      String?  // 'alagamento' | 'bueiro'
-  nivel     String?  // 'baixo' | 'medio' | 'grave'
-  latitude  Float?
-  longitude Float?
-  endereco  String?
-  isActive  Boolean  @default(true)
-  negativeReportsCount Int @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  author   User? @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  authorId Int?
-
-  // Relato opcionalmente vinculado a um bueiro (ponto) ou a uma área (polígono)
-  manhole   Manhole? @relation(fields: [manholeId], references: [id], onDelete: SetNull)
-  manholeId Int?
-  area      Area?    @relation(fields: [areaId], references: [id], onDelete: SetNull)
-  areaId    Int?
-
-  comments Comment[]
-  likes    Like[]
+  id                   Int         @id @default(autoincrement())
+  title                String
+  content              String?
+  published            Boolean     @default(false)
+  authorId             Int?
+  areaId               Int?
+  createdAt            DateTime    @default(now())
+  endereco             String?
+  latitude             Float?
+  longitude            Float?
+  manholeId            Int?
+  medias               Bytes[]     @default([])
+  nivel                String?
+  type                 String?
+  updatedAt            DateTime    @updatedAt
+  isActive             Boolean     @default(true)
+  negativeReportsCount Int         @default(0)
+  comments             Comment[]
+  likes                Like[]
+  area                 Area?       @relation(fields: [areaId], references: [id])
+  author               User?       @relation(fields: [authorId], references: [id])
+  manhole              Manhole?    @relation(fields: [manholeId], references: [id])
+  media                PostMedia[]
 
   @@index([authorId])
   @@index([manholeId])
@@ -78,15 +68,29 @@ model Post {
   @@index([isActive])
 }
 
+model PostMedia {
+  id         Int      @id @default(autoincrement())
+  storageKey String   @unique
+  url        String
+  mimeType   String
+  sizeBytes  Int
+  width      Int?
+  height     Int?
+  position   Int      @default(0)
+  createdAt  DateTime @default(now())
+  postId     Int
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId, position])
+}
+
 model Like {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId Int
-
-  post   Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  postId Int
+  userId    Int
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId])
   @@index([userId])
@@ -96,11 +100,11 @@ model Like {
 model Area {
   id        Int      @id @default(autoincrement())
   name      String
-  nivel     String?
   latitude  Float[]
   longitude Float[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  nivel     String?
   posts     Post[]
 
   @@index([name])

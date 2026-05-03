@@ -50,6 +50,7 @@ export class LoginUseCase {
       refresh_token: refreshToken,
       userId: user.id,
       name: user.name,
+      profilePicture: user.profilePicture ?? null,
     };
   }
 }
