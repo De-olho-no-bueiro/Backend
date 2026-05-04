@@ -23,7 +23,29 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Backend NestJS da aplicação De Olho no Bueiro.
+
+## Environment
+
+Defina estas variáveis antes de subir em produção:
+
+```bash
+PORT=3001
+NODE_ENV=production
+DATABASE_URL=
+JWT_SECRET=
+ADMIN_EMAILS=admin@exemplo.com
+ALLOW_WEB_SIGNUP=false
+ENABLE_API_DOCS=false
+```
+
+Notas:
+
+- `JWT_SECRET` agora é obrigatório. Sem ele, a API falha ao iniciar.
+- `DATABASE_URL` ou `APP_DATABASE_URL` é obrigatório.
+- `/api/users` exige JWT válido e e-mail listado em `ADMIN_EMAILS`.
+- `POST /api/web/v1/auth/signup` fica bloqueado por padrão. Só abre se `ALLOW_WEB_SIGNUP=true`.
+- `/api/docs` só abre fora de produção ou com `ENABLE_API_DOCS=true`.
 
 ## Project setup
 
@@ -46,6 +68,10 @@ UPLOAD_MAX_FILES=6
 UPLOAD_MAX_FILE_SIZE_BYTES=8388608
 UPLOAD_ALLOWED_MIME_TYPES=image/jpeg,image/png,image/webp
 ```
+
+## Hostinger
+
+Para Hostinger sem VPS, este backend só faz sentido em plano com Node.js Apps (`Business` ou `Cloud`). Em hospedagem compartilhada comum sem Node.js, não roda.
 
 ## Compile and run the project
 

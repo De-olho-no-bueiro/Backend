@@ -12,6 +12,10 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       process.env.DATABASE_URL ??
       '';
 
+    if (!connectionString) {
+      throw new Error('DATABASE_URL/APP_DATABASE_URL ausente. Defina conexão PostgreSQL antes de iniciar API.');
+    }
+
     const adapter = new PrismaPg({
       connectionString,
       // Evita falhas intermitentes: conexões idle fecham em 10s por padrão no Prisma v7

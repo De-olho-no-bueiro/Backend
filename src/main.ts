@@ -21,21 +21,27 @@ async function bootstrap() {
   app.use(json({ limit: '50mb' }));
   app.use(urlencoded({ extended: true, limit: '50mb' }));
 
-  const config = new DocumentBuilder()
-  .setTitle("Api De Olho No Bueiro")
-  .setDescription("Esta API atende tanto o aplicativo móvel quanto o sistema de gestão online.")
-  .setVersion("1.0.0")
-  .addBearerAuth()
-  .build();
+  const docsEnabled =
+    process.env.ENABLE_API_DOCS === 'true' || process.env.NODE_ENV !== 'production';
 
-  const document = SwaggerModule.createDocument(app, config);
+  if (docsEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle('Api De Olho No Bueiro')
+      .setDescription('Esta API atende tanto o aplicativo móvel quanto o sistema de gestão online.')
+      .setVersion('1.0.0')
+      .addBearerAuth()
+      .build();
 
-  app.use("/api/docs",
-    apiReference({
-      content: document,
-    })
-  )
+    const document = SwaggerModule.createDocument(app, config);
 
-  await app.listen(process.env.PORT ?? 3000);
+    app.use(
+      '/api/docs',
+      apiReference({
+        content: document,
+      }),
+    );
+  }
+
+  await app.listen(process.env.PORT ?? 3001);
 }
 bootstrap();

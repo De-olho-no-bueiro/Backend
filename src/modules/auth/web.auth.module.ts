@@ -1,9 +1,10 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, Module } from '@nestjs/common';
+import { Controller, Post, Body, HttpCode, HttpStatus, Module, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 
 import { AuthModule } from './auth.module';
 import { LoginUseCase } from './application/use-cases/login.use-case';
 import { SignupUseCase } from './application/use-cases/signup.use-case';
+import { WebSignupGuard } from './infrastructure/guards/web-signup.guard';
 
 import { LoginDto } from './application/dtos/login.dto';
 import { SignupDto } from './application/dtos/signup.dto';
@@ -17,6 +18,7 @@ export class WebAuthController {
   ) {}
 
   @Post('signup')
+  @UseGuards(WebSignupGuard)
   @ApiOperation({ summary: 'Cadastrar administrador/operador (Web)' })
   @ApiResponse({ status: 201, description: 'Usuário cadastrado com sucesso.' })
   async signup(@Body() signupDto: SignupDto) {

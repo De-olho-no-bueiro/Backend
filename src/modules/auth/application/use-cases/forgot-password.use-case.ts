@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { USER_REPOSITORY } from '../../../users/domain/repositories/user.repository.interface';
 import type { IUserRepository } from '../../../users/domain/repositories/user.repository.interface';
 import { Inject } from '@nestjs/common';
@@ -13,10 +13,14 @@ export class ForgotPasswordUseCase {
   ) {}
 
   async execute(data: ForgotPasswordDto) {
+    const response = {
+      message: 'Se o e-mail existir, instruções de recuperação foram geradas.',
+      previewOnly: true,
+    };
+
     const user = await this.userRepository.findByEmail(data.email);
     if (!user) {
-      // Retornar void sem erro para evitar enumeração de emails
-      return;
+      return response;
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -28,7 +32,7 @@ export class ForgotPasswordUseCase {
       resetPasswordExpires, // Note: The repository update and domain entity must support these fields
     });
 
-    console.log(`[Mock Email] Enviar email para ${user.email} com token: ${resetToken}`);
     // Futuro: Serviço de e-mail aqui
+    return response;
   }
 }

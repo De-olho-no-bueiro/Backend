@@ -169,12 +169,12 @@ Abaixo está o descritivo de todas as rotas e funções disponíveis no Backend 
 
 ---
 
-## 💻 Web Admin API (Visão Consolidada Geral)
-**Caminho Base:** `/web/v1/reportes`
+## 🌐 Public Web API (Leitura Aberta)
+**Caminho Base:** `/public/v1`
 
-### `GET /`
-- **Função:** Listar todos os reportes no painel administrativo combinados.
-- **Retorno Esperado:** 
+### `GET /reportes`
+- **Função:** Listar reportes publicos combinados.
+- **Retorno Esperado:**
   ```json
   {
     "reportes": [...],
@@ -182,7 +182,38 @@ Abaixo está o descritivo de todas as rotas e funções disponíveis no Backend 
     "areas": [...]
   }
   ```
-- *Nota: Rota voltada para ser consumida preferencialmente no Dashboard Web (Próxima Fase).*
+
+### `GET /manholes`
+- **Função:** Listar bueiros para leitura publica no portal web.
+
+### `GET /flood-areas`
+- **Função:** Listar areas de alagamento para leitura publica no portal web.
+
+---
+
+## 💻 Web API (Compatibilidade)
+**Caminho Base:** `/web/v1`
+
+### `GET /reportes`
+- **Função:** Alias de compatibilidade para leitura web.
+
+### `GET /manholes`
+- **Função:** Alias de compatibilidade para leitura web.
+
+### `GET /flood-areas`
+- **Função:** Alias de compatibilidade para leitura web.
+
+---
+
+## 🔐 Web Auth (Painel)
+**Caminho Base:** `/web/v1/auth`
+
+### `POST /login`
+- **Função:** Login do painel web.
+
+### `POST /signup`
+- **Função:** Cadastro de operador/admin web.
+- **Segurança:** Bloqueado por padrão. Exige `ALLOW_WEB_SIGNUP=true`.
 
 ---
 
@@ -191,13 +222,16 @@ Abaixo está o descritivo de todas as rotas e funções disponíveis no Backend 
 
 *(Essas rotas são um CRUD nativo de gerenciamento de usuários. Para apps externos, utilize a rota Mobile Auth)*
 
+**Segurança:** Todas exigem Bearer JWT válido **e** que o e-mail do usuário autenticado esteja listado em `ADMIN_EMAILS`.
+
 ### `POST /`
 - **Função:** Forçar a criação de um usuário (Admin/Backend Only).
 - **Corpo:**
   ```json
   {
     "email": "user@example.com",
-    "name": "Opcional"
+    "name": "Opcional",
+    "password": "senhaForte123"
   }
   ```
 
@@ -216,7 +250,7 @@ Abaixo está o descritivo de todas as rotas e funções disponíveis no Backend 
 ---
 
 ## 📊 Health Check (Rota Básica)
-**Caminho Base:** `/`
+**Caminho Base:** `/health`
 
 ### `GET /`
-- **Função:** Rota de teste. Retorna "Hello World" ou checa conectividade para serviços de deploy (render, heroku, aws).
+- **Função:** Healthcheck da API e banco.

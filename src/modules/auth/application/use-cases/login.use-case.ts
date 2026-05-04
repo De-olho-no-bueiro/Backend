@@ -35,15 +35,11 @@ export class LoginUseCase {
       throw new UnauthorizedException('Credenciais inválidas');
     }
 
-    this.logger.log(`User ${data.email} logged in successfully`);
     const payload = { sub: user.id, email: user.email };
     const refreshToken = randomUUID();
 
     await this.userRepository.update(user.id, { refreshToken });
-
-    this.logger.debug(
-      `Issuing tokens for user ${user.email}: accessToken=yes refreshToken=${refreshToken.slice(0, 8)}...`,
-    );
+    this.logger.log(`User ${data.email} logged in successfully`);
 
     return {
       access_token: this.jwtService.sign(payload),
