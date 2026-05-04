@@ -37,3 +37,39 @@ export class WebFloodAreasController {
     return this.reportesService.getFloodAreas();
   }
 }
+
+@ApiTags('public-reportes')
+@Controller('public/v1/reportes')
+export class PublicReportesController {
+  constructor(private readonly reportesService: ReportesService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar reportes publicos' })
+  async getReportes() {
+    return this.reportesService.getReportes();
+  }
+}
+
+@ApiTags('public-manholes')
+@Controller('public/v1/manholes')
+export class PublicManholesController {
+  constructor(private readonly reportesService: ReportesService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar bueiros publicos' })
+  async getManholes() {
+    return this.reportesService.getManholes();
+  }
+}
+
+@ApiTags('public-flood-areas')
+@Controller('public/v1/flood-areas')
+export class PublicFloodAreasController {
+  constructor(private readonly reportesService: ReportesService) {}
+
+  @Get()
+  @ApiOperation({ summary: 'Listar areas de alagamento publicas' })
+  async getFloodAreas() {
+    return this.reportesService.getFloodAreas();
+  }
+}
