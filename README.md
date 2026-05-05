@@ -73,6 +73,22 @@ UPLOAD_ALLOWED_MIME_TYPES=image/jpeg,image/png,image/webp
 
 Para Hostinger sem VPS, este backend só faz sentido em plano com Node.js Apps (`Business` ou `Cloud`). Em hospedagem compartilhada comum sem Node.js, não roda.
 
+## Render
+
+Se for subir este backend no Render, configure o serviço com:
+
+```bash
+Root Directory: Backend
+Build Command: pnpm run build:render
+Start Command: pnpm run start:prod
+```
+
+Notas:
+
+- `build:render` aplica as migrations com `prisma migrate deploy` antes do build.
+- Defina no Render pelo menos: `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production` e `PORT`.
+- O Render normalmente injeta `PORT` automaticamente, mas o backend já respeita essa variável.
+
 ## Compile and run the project
 
 ```bash
