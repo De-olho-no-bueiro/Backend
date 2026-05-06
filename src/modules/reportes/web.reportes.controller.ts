@@ -10,7 +10,7 @@ export class WebReportesController {
   @Get()
   @ApiOperation({ summary: 'Listar Reportes/Alagamentos simples (Painel)' })
   async getReportes() {
-    return this.reportesService.getReportes();
+    return this.reportesService.getPublicReportes();
   }
 }
 
@@ -22,7 +22,7 @@ export class WebManholesController {
   @Get()
   @ApiOperation({ summary: 'Listar Bueiros (Painel)' })
   async getManholes() {
-    return this.reportesService.getManholes();
+    return this.reportesService.getPublicManholes();
   }
 }
 
@@ -34,7 +34,7 @@ export class WebFloodAreasController {
   @Get()
   @ApiOperation({ summary: 'Listar Áreas de Alagamento (Painel)' })
   async getFloodAreas() {
-    return this.reportesService.getFloodAreas();
+    return this.reportesService.getPublicFloodAreas();
   }
 }
 
@@ -58,7 +58,7 @@ export class PublicManholesController {
   @Get()
   @ApiOperation({ summary: 'Listar bueiros publicos' })
   async getManholes() {
-    return this.reportesService.getManholes(undefined, true);
+    return this.reportesService.getPublicManholes();
   }
 }
 
@@ -70,6 +70,6 @@ export class PublicFloodAreasController {
   @Get()
   @ApiOperation({ summary: 'Listar areas de alagamento publicas' })
   async getFloodAreas() {
-    return this.reportesService.getFloodAreas(undefined, true);
+    return this.reportesService.getPublicFloodAreas();
   }
 }

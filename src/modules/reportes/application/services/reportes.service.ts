@@ -191,6 +191,54 @@ export class ReportesService {
     };
   }
 
+  private serializePublicPost(post: any) {
+    return {
+      id: post.id,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+      latitude: post.latitude,
+      longitude: post.longitude,
+      endereco: post.endereco,
+      descricao: post.content || post.title || '',
+      nivel: post.nivel ?? null,
+      type: this.normalizePostType(post.type) ?? post.type ?? null,
+      fotoUrl: post.fotoUrl ?? null,
+    };
+  }
+
+  private serializePublicManhole(manhole: any) {
+    const latestPost = Array.isArray(manhole.posts) ? manhole.posts[0] : null;
+
+    return {
+      id: manhole.id,
+      name: manhole.name,
+      latitude: manhole.latitude,
+      longitude: manhole.longitude,
+      createdAt: latestPost?.createdAt ?? manhole.createdAt,
+      descricao: latestPost?.content || manhole.name,
+      endereco: latestPost?.endereco ?? null,
+    };
+  }
+
+  private serializePublicFloodArea(area: any) {
+    const latestPost = Array.isArray(area.posts) ? area.posts[0] : null;
+
+    return {
+      id: area.id,
+      name: area.name,
+      coordinates: Array.isArray(area.latitude)
+        ? area.latitude.map((latitude: number, index: number) => ({
+            latitude,
+            longitude: area.longitude[index],
+          }))
+        : [],
+      nivel: area.nivel || latestPost?.nivel || 'medio',
+      createdAt: latestPost?.createdAt ?? area.createdAt,
+      descricao: latestPost?.content || area.name,
+      endereco: latestPost?.endereco ?? null,
+    };
+  }
+
   private async attachStructuredMedia(postId: number, authorId: number, data: any) {
     const structuredMedia = this.extractStructuredMedia(authorId, data);
     if (structuredMedia.length === 0 || !this.postMediaModel) {
@@ -267,9 +315,9 @@ export class ReportesService {
 
   async getPublicMapData() {
     const [reportes, manholes, areas] = await Promise.all([
-      this.getReportes(undefined, true),
-      this.getManholes(undefined, true),
-      this.getFloodAreas(undefined, true),
+      this.getPublicReportes(),
+      this.getPublicManholes(),
+      this.getPublicFloodAreas(),
     ]);
 
     return {
@@ -277,6 +325,21 @@ export class ReportesService {
       manholes,
       areas,
     };
+  }
+
+  async getPublicReportes() {
+    const reportes = await this.getReportes(undefined, true);
+    return reportes.map((post) => this.serializePublicPost(post));
+  }
+
+  async getPublicManholes() {
+    const manholes = await this.getManholes(undefined, true);
+    return manholes.map((manhole) => this.serializePublicManhole(manhole));
+  }
+
+  async getPublicFloodAreas() {
+    const areas = await this.getFloodAreas(undefined, true);
+    return areas.map((area) => this.serializePublicFloodArea(area));
   }
 
   // Bueiros
