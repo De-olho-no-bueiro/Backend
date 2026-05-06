@@ -46,7 +46,7 @@ export class PublicReportesController {
   @Get()
   @ApiOperation({ summary: 'Listar reportes publicos' })
   async getReportes() {
-    return this.reportesService.getReportes();
+    return this.reportesService.getPublicMapData();
   }
 }
 

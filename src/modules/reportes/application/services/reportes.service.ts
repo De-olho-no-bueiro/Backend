@@ -27,6 +27,19 @@ export class ReportesService {
     return (this.prisma as any).postMedia;
   }
 
+  private normalizePostType(type?: string | null): string | null {
+    if (typeof type !== 'string') return null;
+
+    const normalized = type.trim().toLowerCase();
+    if (!normalized) return null;
+
+    if (normalized.includes('bueiro')) return 'bueiro';
+    if (normalized.includes('alag')) return 'alagamento';
+    if (normalized.includes('area')) return 'area';
+
+    return normalized;
+  }
+
   private parseMedias(midias?: string[]): any[] {
     if (!midias || !Array.isArray(midias)) return [];
     return midias.slice(0, 6).map((base64String) => {
@@ -199,7 +212,7 @@ export class ReportesService {
       data: {
         title: data.tipo,
         content: data.descricao,
-        type: data.tipo,
+        type: this.normalizePostType(data.tipo) ?? 'alagamento',
         nivel: data.nivel,
         latitude: data.latitude,
         longitude: data.longitude,
@@ -217,7 +230,16 @@ export class ReportesService {
   async getReportes(viewerId?: number) {
     try {
       const reportes = await this.postModel.findMany({
-        where: { type: 'alagamento', isActive: true }, // O mobile chama de reporte o alagamento genérico por enquanto 
+        where: {
+          isActive: true,
+          areaId: null,
+          manholeId: null,
+          OR: [
+            { type: 'alagamento' },
+            { type: null },
+            { type: '' },
+          ],
+        }, // Inclui incidentes legados sem type normalizado.
         orderBy: { createdAt: 'desc' },
         include: this.getPostInclude(viewerId),
       });
@@ -227,12 +249,34 @@ export class ReportesService {
       if (!this.isLegacySchemaError(error)) throw error;
       this.logger.warn('Legacy schema detected in getReportes. Falling back without likes/isActive.');
       const reportes = await this.postModel.findMany({
-        where: { type: 'alagamento' },
+        where: {
+          areaId: null,
+          manholeId: null,
+          OR: [
+            { type: 'alagamento' },
+            { type: null },
+            { type: '' },
+          ],
+        },
         orderBy: { createdAt: 'desc' },
         include: { author: { select: { id: true, name: true, profilePicture: true } } },
       });
       return reportes.map((post) => this.serializeLegacyPost(post));
     }
+  }
+
+  async getPublicMapData() {
+    const [reportes, manholes, areas] = await Promise.all([
+      this.getReportes(),
+      this.getManholes(),
+      this.getFloodAreas(),
+    ]);
+
+    return {
+      reportes,
+      manholes,
+      areas,
+    };
   }
 
   // Bueiros

@@ -79,13 +79,14 @@ Se for subir este backend no Render, configure o serviço com:
 
 ```bash
 Root Directory: Backend
-Build Command: pnpm run build:render
+Build Command: pnpm install --no-frozen-lockfile && pnpm run build:render
 Start Command: pnpm run start:prod
 ```
 
 Notas:
 
 - `build:render` aplica as migrations com `prisma migrate deploy` antes do build.
+- Use `&&`, não `;`, para o deploy parar se o `pnpm install` falhar.
 - Defina no Render pelo menos: `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production` e `PORT`.
 - O Render normalmente injeta `PORT` automaticamente, mas o backend já respeita essa variável.
 
