@@ -58,7 +58,7 @@ export class PublicManholesController {
   @Get()
   @ApiOperation({ summary: 'Listar bueiros publicos' })
   async getManholes() {
-    return this.reportesService.getManholes();
+    return this.reportesService.getManholes(undefined, true);
   }
 }
 
@@ -70,6 +70,6 @@ export class PublicFloodAreasController {
   @Get()
   @ApiOperation({ summary: 'Listar areas de alagamento publicas' })
   async getFloodAreas() {
-    return this.reportesService.getFloodAreas();
+    return this.reportesService.getFloodAreas(undefined, true);
   }
 }

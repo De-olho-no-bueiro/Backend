@@ -227,11 +227,11 @@ export class ReportesService {
     return post;
   }
 
-  async getReportes(viewerId?: number) {
+  async getReportes(viewerId?: number, includeInactive = false) {
     try {
       const reportes = await this.postModel.findMany({
         where: {
-          isActive: true,
+          ...(includeInactive ? {} : { isActive: true }),
           areaId: null,
           manholeId: null,
           OR: [
@@ -267,9 +267,9 @@ export class ReportesService {
 
   async getPublicMapData() {
     const [reportes, manholes, areas] = await Promise.all([
-      this.getReportes(),
-      this.getManholes(),
-      this.getFloodAreas(),
+      this.getReportes(undefined, true),
+      this.getManholes(undefined, true),
+      this.getFloodAreas(undefined, true),
     ]);
 
     return {
@@ -310,14 +310,14 @@ export class ReportesService {
     return manhole;
   }
 
-  async getManholes(viewerId?: number) {
+  async getManholes(viewerId?: number, includeInactive = false) {
     try {
       const manholes = await this.manholeModel.findMany({
-        where: { posts: { some: { isActive: true } } },
+        where: includeInactive ? {} : { posts: { some: { isActive: true } } },
         orderBy: { createdAt: 'desc' },
         include: {
           posts: {
-            where: { isActive: true },
+            ...(includeInactive ? {} : { where: { isActive: true } }),
             orderBy: { createdAt: 'desc' },
             take: 1,
             include: this.getPostInclude(viewerId),
@@ -390,14 +390,14 @@ export class ReportesService {
     return area;
   }
 
-  async getFloodAreas(viewerId?: number) {
+  async getFloodAreas(viewerId?: number, includeInactive = false) {
     try {
       const areas = await this.areaModel.findMany({
-        where: { posts: { some: { isActive: true } } },
+        where: includeInactive ? {} : { posts: { some: { isActive: true } } },
         orderBy: { createdAt: 'desc' },
         include: {
           posts: {
-            where: { isActive: true },
+            ...(includeInactive ? {} : { where: { isActive: true } }),
             orderBy: { createdAt: 'desc' },
             take: 1,
             include: this.getPostInclude(viewerId),
