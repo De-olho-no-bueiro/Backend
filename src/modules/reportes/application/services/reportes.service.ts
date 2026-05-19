@@ -333,13 +333,76 @@ export class ReportesService {
   }
 
   async getPublicManholes() {
-    const manholes = await this.getManholes(undefined, true);
-    return manholes.map((manhole) => this.serializePublicManhole(manhole));
+    try {
+      const manholes = await this.manholeModel.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          posts: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              createdAt: true,
+              content: true,
+              endereco: true,
+            },
+          },
+        },
+      });
+
+      return manholes.map((manhole) => this.serializePublicManhole(manhole));
+    } catch (error) {
+      if (!this.isLegacySchemaError(error)) throw error;
+      this.logger.warn('Legacy schema detected in getPublicManholes. Falling back.');
+      
+      const manholes = await this.manholeModel.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          posts: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      return manholes.map((manhole) => this.serializePublicManhole(manhole));
+    }
   }
 
   async getPublicFloodAreas() {
-    const areas = await this.getFloodAreas(undefined, true);
-    return areas.map((area) => this.serializePublicFloodArea(area));
+    try {
+      const areas = await this.areaModel.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          posts: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+            select: {
+              createdAt: true,
+              content: true,
+              endereco: true,
+              nivel: true,
+            },
+          },
+        },
+      });
+
+      return areas.map((area) => this.serializePublicFloodArea(area));
+    } catch (error) {
+      if (!this.isLegacySchemaError(error)) throw error;
+      this.logger.warn('Legacy schema detected in getPublicFloodAreas. Falling back.');
+
+      const areas = await this.areaModel.findMany({
+        orderBy: { createdAt: 'desc' },
+        include: {
+          posts: {
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          },
+        },
+      });
+
+      return areas.map((area) => this.serializePublicFloodArea(area));
+    }
   }
 
   // Bueiros
