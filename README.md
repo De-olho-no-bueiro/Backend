@@ -1,157 +1,168 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# De Olho no Bueiro API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API em NestJS + Prisma que atende o aplicativo mobile, o portal web e os fluxos administrativos do ecossistema De Olho no Bueiro.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## O que este projeto entrega
 
-## Description
+- Autenticação para mobile e web
+- Cadastro e leitura de reportes de alagamentos e bueiros
+- Comentários, likes e verificação de ocorrências
+- Perfil do usuário autenticado
+- Upload com URL pré-assinada para storage compatível com S3
+- Endpoints públicos para consumo do portal web
+- Documentação interativa da API em `/api/docs` fora de produção, ou com `ENABLE_API_DOCS=true`
 
-Backend NestJS da aplicação De Olho no Bueiro.
+## Stack
 
-## Environment
+- NestJS
+- Prisma
+- PostgreSQL
+- TypeScript
+- JWT
 
-Defina estas variáveis antes de subir em produção:
+## Estrutura resumida
 
-```bash
+```text
+src/
+├─ main.ts
+├─ prisma/
+└─ modules/
+   ├─ auth/
+   ├─ comments/
+   ├─ reportes/
+   ├─ uploads/
+   └─ users/
+```
+
+## Requisitos
+
+- Node.js 20+
+- npm 10+ ou pnpm 9+
+- Docker e Docker Compose para subir o PostgreSQL local
+
+## Variáveis de ambiente
+
+Crie um arquivo `.env` na raiz de `Backend/`.
+
+Exemplo mínimo para desenvolvimento:
+
+```env
 PORT=3001
-NODE_ENV=production
-DATABASE_URL=
-JWT_SECRET=
+NODE_ENV=development
+ENABLE_API_DOCS=true
+
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=de_olho_no_bueiro
+
+DATABASE_URL=postgresql://postgres:postgres@localhost:5494/de_olho_no_bueiro?schema=public
+APP_DATABASE_URL=postgresql://postgres:postgres@localhost:5494/de_olho_no_bueiro?schema=public
+
+JWT_SECRET=troque-esta-chave-em-producao
 ADMIN_EMAILS=admin@exemplo.com
-ALLOW_WEB_SIGNUP=false
-ENABLE_API_DOCS=false
-```
 
-Notas:
-
-- `JWT_SECRET` agora é obrigatório. Sem ele, a API falha ao iniciar.
-- `DATABASE_URL` ou `APP_DATABASE_URL` é obrigatório.
-- `/api/users` exige JWT válido e e-mail listado em `ADMIN_EMAILS`.
-- `POST /api/web/v1/auth/signup` fica bloqueado por padrão. Só abre se `ALLOW_WEB_SIGNUP=true`.
-- `/api/docs` só abre fora de produção ou com `ENABLE_API_DOCS=true`.
-
-## Project setup
-
-```bash
-$ pnpm install
-```
-
-## Environment for image uploads
-
-Configure the backend with an S3-compatible bucket before using the mobile image flow:
-
-```bash
-S3_ENDPOINT=
-S3_REGION=us-east-1
-S3_BUCKET=
-S3_ACCESS_KEY_ID=
-S3_SECRET_ACCESS_KEY=
-S3_PUBLIC_BASE_URL=
 UPLOAD_MAX_FILES=6
 UPLOAD_MAX_FILE_SIZE_BYTES=8388608
 UPLOAD_ALLOWED_MIME_TYPES=image/jpeg,image/png,image/webp
+
+S3_ACCESS_KEY_ID=local-access-key
+S3_SECRET_ACCESS_KEY=local-secret-key
+S3_BUCKET=de-olho-no-bueiro
+S3_REGION=us-east-1
+S3_ENDPOINT=https://storage.exemplo.com
+S3_PUBLIC_BASE_URL=https://storage.exemplo.com/de-olho-no-bueiro
 ```
 
-## Hostinger
+Observações:
 
-Para Hostinger sem VPS, este backend só faz sentido em plano com Node.js Apps (`Business` ou `Cloud`). Em hospedagem compartilhada comum sem Node.js, não roda.
+- A API usa `PORT=3001` por padrão.
+- A conexão com banco aceita `APP_DATABASE_URL` ou `DATABASE_URL`.
+- Sem `JWT_SECRET` a API não sobe.
+- Os uploads dependem de um provedor S3 compatível.
 
-## Render
+## Como rodar localmente
 
-Se for subir este backend no Render, configure o serviço com:
+1. Instale as dependências:
 
 ```bash
-Root Directory: Backend
-Build Command: pnpm install --no-frozen-lockfile && pnpm run build:render
-Start Command: pnpm run start:prod
+npm install
 ```
 
-Notas:
-
-- `build:render` aplica as migrations com `prisma migrate deploy` antes do build.
-- Use `&&`, não `;`, para o deploy parar se o `pnpm install` falhar.
-- Defina no Render pelo menos: `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV=production` e `PORT`.
-- O Render normalmente injeta `PORT` automaticamente, mas o backend já respeita essa variável.
-
-## Compile and run the project
+2. Suba o PostgreSQL local:
 
 ```bash
-# development
-$ pnpm run start
-
-# watch mode
-$ pnpm run start:dev
-
-# production mode
-$ pnpm run start:prod
+docker compose up -d
 ```
 
-## Run tests
+3. Aplique as migrations:
 
 ```bash
-# unit tests
-$ pnpm run test
-
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+npx prisma migrate deploy --schema=src/prisma/schema.prisma
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+Se estiver evoluindo o schema localmente, pode usar:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+npx prisma migrate dev --schema=src/prisma/schema.prisma
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+4. Inicie a API em modo de desenvolvimento:
 
-## Resources
+```bash
+npm run start:dev
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+5. Acesse:
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+- API: `http://localhost:3001/api`
+- Docs: `http://localhost:3001/api/docs`
 
-## Support
+## Endpoints principais
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Com o prefixo global `/api`:
 
-## Stay in touch
+- Público web:
+  - `GET /public/v1/reportes`
+  - `GET /public/v1/manholes`
+  - `GET /public/v1/flood-areas`
+- Mobile:
+  - `POST /mobile/v1/auth/signup`
+  - `POST /mobile/v1/auth/login`
+  - `GET /mobile/v1/reportes`
+  - `POST /mobile/v1/reportes`
+  - `GET /mobile/v1/manholes`
+  - `GET /mobile/v1/flood-areas`
+- Web administrativo:
+  - `POST /web/v1/auth/login`
+  - `GET /web/v1/reportes`
+  - `GET /web/v1/manholes`
+  - `GET /web/v1/flood-areas`
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## Scripts úteis
 
-## License
+```bash
+npm run start:dev
+npm run build
+npm run start:prod
+npm run lint
+npm run test
+npm run test:cov
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## Banco de dados
+
+- Prisma schema: `src/prisma/schema.prisma`
+- Migrations: `src/prisma/migrations/`
+- Container local padrão: `api-do-bueiro-postgres`
+- Porta local do PostgreSQL: `5494`
+
+## Integração com os outros projetos
+
+- `frontend-web` espera a API em `http://localhost:3001/api`
+- `de-olho-no-bueiro-mobile` deve apontar `EXPO_PUBLIC_API_URL` para esta API
+
+No Android Emulator, normalmente o backend deve ser acessado por `http://10.0.2.2:3001/api` em vez de `localhost`.
+
+## Contribuição
+
+Este projeto foi preparado para colaboração aberta. Leia [CONTRIBUTING.md](./CONTRIBUTING.md) antes de abrir PR.
